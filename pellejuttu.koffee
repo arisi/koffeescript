@@ -1,3 +1,6 @@
 require "pellejuttu"
 
 int xxxx=1
+
+int pf = () ->
+  return 0x1234

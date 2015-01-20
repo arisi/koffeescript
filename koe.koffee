@@ -1,0 +1,21 @@
+#!/usr/bin/env koffeescript.coffee
+#encoding: UTF-8
+
+struct rec
+  int aa
+
+rec recs[100]
+
+int main = (int argc,char **argv) ->
+  int i;
+  i= if argc>5 then 6 else 7
+  printf("luuppi %d\n",i+=1) until i>10
+  recs[0].aa=123
+  printf "\nKoffeeScript: -- here we go!\n"
+  printf("tadaa\n") if true
+  for i=0;i<argc;i++
+    printf "arg:%d='%s'\n",i,argv[i]
+  if argc<2 or not true
+    printf "EI ARGUMENTTIA!!!!!!!\n"
+    exit(-1)
+
