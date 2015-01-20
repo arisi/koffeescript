@@ -3,6 +3,7 @@ logs
 *.log
 *~
 test
+.koffee.cache/*
 
 # Runtime data
 pids
