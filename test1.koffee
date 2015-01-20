@@ -1,0 +1,42 @@
+int x=1
+char matti[50]="OUJEE"
+char matti2[]="OUJEE"
+char ptr
+int numero
+
+struct xxx
+  unsigned char proto
+  unsigned int mac
+  unsigned int ip
+
+xxx juttu
+
+void juu=() ->
+
+int lista[]={1,2,3,4}
+
+int apujuttu=(int jee) ->
+  printf("apujuttu: %d\n",jee)
+
+#kommentti
+//kukkuu
+
+int main=(int argc) ->
+  printf "TOIMII::: \n"
+  x=true
+  int juttu222222222222222222222222222222=45
+  x=apujuttu(x)
+  juu()
+  juttu.mac=123
+  printf "got %d %d\n",x,juttu.mac
+  square(15)
+  return 0
+
+int square = (x)     ->
+  if x>10
+    printf("iso\n")
+  else if x>5
+    printf("keskikoko\n")
+  else
+    printf("pieni\n") #KOMMENTTI
+
