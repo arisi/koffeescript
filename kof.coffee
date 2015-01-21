@@ -2,7 +2,6 @@
 #encoding: UTF-8
 
 fs = require('fs');
-util = require('util');
 path = require('path');
 require("coffee-script")
 koffee = require('./koffeescript.coffee')
@@ -36,6 +35,7 @@ apath=path.dirname (path.resolve fn)
 cache_path="#{apath}/.koffee.cache"
 target="#{cache_path}/#{afn}.bin"
 cfn="#{cache_path}/#{afn}.c"
+#console.log cfn
 
 if not fs.existsSync cache_path
   fs.mkdirSync cache_path

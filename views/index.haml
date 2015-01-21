@@ -1,0 +1,101 @@
+!!!
+%head
+  %meta{:charset => "utf-8"}
+    %meta{:content => "IE=edge,chrome=1", "http-equiv" => "X-UA-Compatible"}
+      %title
+      %meta{:content => "", :name => "description"}
+        %meta{:content => "width=device-width, initial-scale=1", :name => "viewport"}
+          %link{:href => "css/bootstrap.min.css", :rel => "stylesheet"}
+            :css
+              body {
+                  padding-top: 50px;
+                  padding-bottom: 20px;
+              }
+          %link{:href => "css/bootstrap-theme.min.css", :rel => "stylesheet"}
+          %link{:href => "css/main.css", :rel => "stylesheet"}
+          %script{:src => "js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"}
+          %link{:href => "/css/node-mqtt-gw.css", :rel => "stylesheet", :type => "text/css"}
+
+          %script{:src => "//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"}
+
+          %script{:src => "http://mac.lnx.fi/js/dust-full.min.js"}
+          %script{:src => "http://mac.lnx.fi/js/dust-helpers.min.js"}
+          %script{:src => "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"}
+          //%script{:src => "/js/ace/mode/coffee.js"}
+          %script{:src => "/js/koffee-http.js"}
+
+%body
+  /[if lt IE 7]
+    <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+  %script#devs_template{:type=>'text/template'}
+    %table.table.table-condensed
+      %tr
+        %th Port
+        %th Serno
+        %th State
+        %th LastP3
+        %th Stamp
+        %th Exist
+      {#data}
+      %tr{:class => "{class}"}
+        %td {dev}
+        %td {id}
+        %td {state}
+        %td {@age t=lastp3 /}
+        %td {@age t=stamp /}
+        %td {@age t=exist /}
+      {/data}
+
+  %script#form_template{:type=>'text/template'}
+    .panel.panel-default
+      .panel-heading
+        %h3.panel-title Configuration:
+      .panel-body
+        %form#ff.form-horizontal
+          .form-group
+            %label.col-sm-3.control-label{:for => "include"} Include:
+            .col-sm-9
+              %input#include.form-control{:placeholder => "", :type => "text", :value => "{include}", :name => "include"}
+          .form-group
+            %label.col-sm-3.control-label{:for => "exclude"} Exclude:
+            .col-sm-9
+              %input.form-control{:placeholder => "", :type => "text", :value => "{exclude}", :name => "exclude"}
+          .form-group
+            %label.col-sm-3.control-label{:for => "mqtt"} MQTT-SN URL:
+            .col-sm-9
+              %input.form-control{:placeholder => "", :type => "text", :value => "{mqtt}", :name => "mqtt"}
+          .form-group
+            .col-sm-offset-3.col-sm-9
+              %button.button.btn.btn-success{:onclick => "ajax_form('ff'); return(false);"} OK!
+
+  %nav.navbar.navbar-inverse.navbar-fixed-top{:role => "navigation"}
+    .container
+      .navbar-header
+        %button.navbar-toggle.collapsed{"aria-controls" => "navbar", "aria-expanded" => "false", "data-target" => "#navbar", "data-toggle" => "collapse", :type => "button"}
+          %span.sr-only Toggle navigation
+          %span.icon-bar
+          %span.icon-bar
+          %span.icon-bar
+        %a.navbar-brand{:href => "#"} KoffeeScript
+      #navbar.navbar-collapse.collapse
+        %form.navbar-form.navbar-right{:role => "form"}
+          .form-group
+            %input.form-control{:placeholder => "Email", :type => "text"}
+          .form-group
+            %input.form-control{:placeholder => "Password", :type => "password"}
+          %button.btn.btn-success{:type => "submit"} Sign in
+  .container-fluid
+    .row
+      .col-md-4
+        #koffee
+          tadaa
+      .col-md-8
+        #cee
+          ceee
+          xxx
+    %hr
+      %footer
+        %p &copy; myGeiger 2015
+
+
+

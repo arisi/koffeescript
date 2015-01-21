@@ -73,12 +73,34 @@ exports.builder = (fn,cfn,target) ->
             freader "#{hit[1]}.koffee"
       else
         dada=replace dada, /(\/\/[^"]*)$/,""
-        dada=replace dada, /;*$/,""
+        #dada=replace dada, /;*$/,"" -- later -- pragma stuff
         continue if dada=="" or match dada,/^\s*$/
         lines.push dada
         source.push "#{ffn}:#{frow}"
 
   freader fn
+
+  do_cmd = (line,extra_ind) ->
+    ret=""
+    ind+=extra_ind
+    if infunc and i[row+1]==0 and not incond[ind-1] #last line of function
+      if not match line,/^\s*return/
+        #puts "***********LAST LINE****************, not return! #{incond[ind-1]} #{line}"
+        ret="return "
+    if line==""
+      console.log "crap '#{line}'"
+    else if hit=match line,/^([a-zA-Z_]+) (.+)$/
+      cmd=hit[1]
+      rest=hit[2]
+      #puts "::#{cmd }::#{rest}::"
+      if not match rest,/\(.+\)/
+        #puts "NO PAREN"
+        emit "#{ret}#{cmd}  ( #{rest} );",line
+      else
+        emit "#{ret}#{line};",line
+    else
+      emit "#{ret}#{line};",line
+    ind-=extra_ind
 
   row=0
   i={}
@@ -119,6 +141,7 @@ exports.builder = (fn,cfn,target) ->
   infunc=false
   incond={}
   oind=0
+  suspend=false
   #console.log l
   emit("#include \"koffeescript.h\"","");
 
@@ -137,8 +160,22 @@ exports.builder = (fn,cfn,target) ->
             #puts "ELSE COMES"
           else
             #puts "COND ENDS"
-            emit "  }",""
+            emit "}",""
             incond[ii]=false
+
+    if suspend
+      console.log "suspended #{line}"
+      emit(line,line)
+      continue
+    if hit=match line,/^#pragma\s+(no_)*koffee\s*$/
+      console.log "PRAGMAA!! #{hit[1]}"
+      if not hit[1]
+        suspend=false
+        intofunc=false
+      else
+        suspend=true
+      console.log "PRAGMAA!! #{hit[1]} -> #{suspend}"
+
     if ind==0
       if instruct
         #puts "STRUCT ENDS"
@@ -158,12 +195,25 @@ exports.builder = (fn,cfn,target) ->
       else
         console.log "Error: Struct must not be indented"
     else if hit=match line,/^for\s+(.+)\s*$/
-      incond[ind]=true
+      incond[ind]="for"
       rest=hit[1]
-      #puts "incodition"
+      #console.log "foooor"
+      if hit=match rest,/^(.+)\s+in\s+\[(.+)\.\.(.+)\]\s+by\s+(.+)\s*$/
+        #console.log "range !!",hit
+        v=hit[1]
+        s=hit[2]
+        e=hit[3]
+        step=hit[4]
+        rest="#{v}=(#{s});#{v}<(#{e});#{v}+=(#{step})"
+      else if hit=match rest,/^(.+)\s+in\s+\[(.+)\.\.(.+)\]\s*$/
+        #console.log "range !!",hit
+        v=hit[1]
+        s=hit[2]
+        e=hit[3]
+        rest="#{v}=(#{s});#{v}<(#{e});#{v}+=1"
       emit "for (#{rest}) {",line
     else if hit=match line,/^while\s+(.+)\s*$/
-      incond[ind]=true
+      incond[ind]="while"
       rest=hit[1]
       #puts "incodition"
       emit "while (#{rest}) {",line
@@ -178,32 +228,53 @@ exports.builder = (fn,cfn,target) ->
       res=hit[1]
       cond=hit[2]
       #puts "if lopussa #{cond},#{res}"
-      emit "if (#{cond}) { #{res}; }",line
+      emit "if (#{cond}) {",line
+      do_cmd(res,1)
+      #emit "  #{res}; ",""
+      emit "}",
     else if hit=match line,/^(.+)\s+while\s+(.+)\s*/
       res=hit[1]
       cond=hit[2]
       #puts "if lopussa #{cond},#{res}"
-      emit "while (#{cond}) { #{res}; }",line
+      emit "while (#{cond}) {",line
+      do_cmd(res,1)
+      emit "}",
     else if hit=match line,/^(.+)\s+until\s+(.+)\s*/
       res=hit[1]
       cond=hit[2]
       #puts "if lopussa #{cond},#{res}"
-      emit "while (! (#{cond})) { #{res}; }",line
+      emit "while (! (#{cond})) {",line
+      do_cmd(res,1)
+      emit "}",
+    else if hit=match line,/^switch\s+(.+)\s*$/
+      incond[ind]="switch"
+      rest=hit[1]
+      #puts "incodition"
+      emit "switch (#{rest}) {",line
+    else if hit=match line,/^when\s+(.+)\s+then\s+(.+)\s*$/
+      rest=hit[1]
+      emit "case (#{hit[1]}):",line
+      do_cmd(hit[2],1)
+      emit "  break;",""
+    else if incond[ind-1]=="switch" and hit=match line,/^else\s(.+)\s*$/
+      emit "default:",line
+      do_cmd(hit[1],1)
+      emit "  break;",""
     else if hit=match line,/^if\s+(.+)\s*$/
-      incond[ind]=true
+      incond[ind]="if"
       rest=hit[1]
       #puts "incodition"
       emit "if (#{rest}) {",line
-    else if incond[ind] and hit=match line,/^else\s+if\s*(.+)\s*$/
+    else if incond[ind]=="if" and hit=match line,/^else\s+if\s*(.+)\s*$/
       rest=hit[1]
       #puts "incodition continues"
       emit "} else if (#{rest}) {",line
-    else if incond[ind]  and hit=match line,/^else\s*$/
+    else if incond[ind]=="if" and hit=match line,/^else\s*$/
       rest=hit[1]
       #puts "incodition continues "
       emit "} else {",line
 
-    else if hit=match line,/^([a-zA-Z_]+ )*([a-zA-Z_]+) ([a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=(.*)){0,1}\s*$/
+    else if hit=match line,/^([a-zA-Z_]+\s+)*([a-zA-Z_]+)\s+((?:[\*]{0,1}\s*)[a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=(.*)){0,1}\s*$/
       #console.log hit
       typep=hit[1]||""
       type=hit[2]
@@ -230,24 +301,7 @@ exports.builder = (fn,cfn,target) ->
         emit "#{typep}#{type} #{sym}#{dim};",line
     else
       #puts "CCCCCCCCCCCCCCc command???"
-      ret=""
-      if infunc and i[row+1]==0 and not incond[ind-1] #last line of function
-        if not match line,/^\s*return/
-          #puts "***********LAST LINE****************, not return! #{incond[ind-1]} #{line}"
-          ret="return "
-      if line[0]=="#" or line==""
-        #puts "crap '#{line}'"
-      else if hit=match line,/^([a-zA-Z_]+) (.+)$/
-        cmd=hit[1]
-        rest=hit[2]
-        #puts "::#{cmd }::#{rest}::"
-        if not match rest,/\(.+\)/
-          #puts "NO PAREN"
-          emit "#{ret}#{cmd}  ( #{rest} );",line
-        else
-          emit "#{ret}#{line};",line
-      else
-        emit "#{ret}#{line};",line
+      do_cmd(line,0)
     row+=1
     oind=ind
 
