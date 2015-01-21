@@ -3,6 +3,7 @@
 
 fs = require('fs');
 util = require('util');
+path = require('path');
 exec = require('child_process').exec;
 sprintf = require('/home/arisi/projects/node-mqtt-gw/node_modules/sprintf-js').sprintf;
 puts=util.puts
@@ -16,7 +17,7 @@ replace = (s,exp,replacement) ->
   rePattern = new RegExp(exp)
   s.replace(rePattern,replacement);
 
-builder = (fn) ->
+builder = (fn,cfn,target) ->
   c=""
   lines=[]
   source=[]
@@ -241,9 +242,8 @@ builder = (fn) ->
 
   #puts "-----------------"
   #puts c
-
-  fs.writeFileSync "#{path}/#{fn}.c", c
-  cc="gcc -I /usr/local/include/koffeescript #{path}/#{fn}.c -o #{target}"
+  fs.writeFileSync cfn, c
+  cc="gcc -I /usr/local/include/koffeescript #{cfn} -o #{target}"
   #puts cc
   child = exec cc,  (error, stdout, stderr) ->
     #puts stdout
@@ -266,27 +266,6 @@ builder = (fn) ->
       for f in fails
         puts f
 
-path=".koffee.cache"
-fn=process.argv[2]
-target="#{path}/#{fn}.bin"
-
-
-if not fs.existsSync path
-  fs.mkdirSync path
-
-fd=fs.openSync fn,"r"
-stat=fs.fstatSync fd
-fs.closeSync(fd)
-
-cache=false
-if fs.existsSync target
-  fd=fs.openSync target,"r"
-  tstat=fs.fstatSync fd
-  fs.closeSync(fd)
-
-  if tstat.mtime> stat.mtime
-    cache=true
-
 
 runner = () ->
   args=""
@@ -302,7 +281,39 @@ runner = () ->
     if stderr and stederr>""
       puts stderr
 
+fn=process.argv[2]
+
+
+
+
+afn=path.basename fn
+apath=path.dirname (path.resolve fn)
+
+cache_path="#{apath}/.koffee.cache"
+target="#{cache_path}/#{afn}.bin"
+cfn="#{cache_path}/#{afn}.c"
+
+puts cache_path,target,cfn
+
+if not fs.existsSync cache_path
+  fs.mkdirSync cache_path
+
+
+fd=fs.openSync fn,"r"
+stat=fs.fstatSync fd
+fs.closeSync(fd)
+
+cache=false
+if fs.existsSync target
+  fd=fs.openSync target,"r"
+  tstat=fs.fstatSync fd
+  fs.closeSync(fd)
+
+  if tstat.mtime> stat.mtime
+    cache=true
+
+
 if not cache
-  builder fn #this also runs after build
+  builder fn,cfn,target #this also runs after build
 else
   runner()
