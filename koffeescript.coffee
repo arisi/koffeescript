@@ -89,7 +89,7 @@ exports.builder = (fn,cfn,target) ->
         ret="return "
     if line==""
       console.log "crap '#{line}'"
-    else if hit=match line,/^([a-zA-Z_]+) (.+)$/
+    else if hit=match line,/^([a-zA-Z_]+)\s+(.+)$/
       cmd=hit[1]
       rest=hit[2]
       #puts "::#{cmd }::#{rest}::"
@@ -274,29 +274,24 @@ exports.builder = (fn,cfn,target) ->
       #puts "incodition continues "
       emit "} else {",line
 
-    else if hit=match line,/^([a-zA-Z_]+\s+)*([a-zA-Z_]+)\s+((?:[\*]{0,1}\s*)[a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=(.*)){0,1}\s*$/
-      #console.log hit
+    else if hit=match line,/^([a-zA-Z_]+\s+)*([a-zA-Z_]+)\s+((?:[\*]{0,1}\s*)[a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=\s*(.*)){0,1}\s*$/
+      #variable declaration OR function start
       typep=hit[1]||""
       type=hit[2]
       sym=hit[3]
       dim=hit[4]||""
       init=hit[5]
       args=false
-      #puts "*** type=#{type}, sym=#{sym}, dim=#{dim}, init=#{init}"
-      if init and hit=match init,/^\s*\((.*)\)\s*->/
+      if init and ind==0 and hit=match init,/^\s*\((.*)\)\s*->/ #function decl
         args=hit[1]
-        #puts "ISFUNC!!! args=#{args}"
         init=""
         intofunc=true
-     # if not intofunc and (not dim or dim=="[]")
-     #   dim=""
-     #   sym="*#{sym}"
-
       if intofunc
         emit "#{typep}#{type} #{sym}(#{args}) {",line
         infunc=sym
       else if init
-        emit "#{typep}#{type} #{sym}#{dim}=#{init};",line
+        emit "#{typep}#{type} #{sym}#{dim}=",line
+        do_cmd(init,1)
       else
         emit "#{typep}#{type} #{sym}#{dim};",line
     else

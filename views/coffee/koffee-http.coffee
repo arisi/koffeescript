@@ -102,9 +102,12 @@ struct rekordi
   int eka
   int toka
 
+int *jepulis = (int arvo) ->
+  &arvo
+
 int main = (int argc,char** argv) ->
   printf "oujee\\n"
-  int *p
+  int *p= jepulis "12"
 
   if argc>3
     printf "ok"
