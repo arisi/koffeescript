@@ -2,26 +2,38 @@
 #encoding: UTF-8
 
 fs = require('fs');
-util = require('util');
-path = require('path');
 exec = require('child_process').exec;
 sprintf = require('/home/arisi/projects/node-mqtt-gw/node_modules/sprintf-js').sprintf;
-puts=util.puts
-
 
 match = (s,exp) ->
   rePattern = new RegExp(exp)
   s.match(rePattern);
+exports.match=match
 
 replace = (s,exp,replacement) ->
   rePattern = new RegExp(exp)
   s.replace(rePattern,replacement);
 
-builder = (fn,cfn,target) ->
+exports.runner = (target) ->
+  args=""
+  for arg in process.argv[3..-1]
+    if match arg,/\s+/
+      args+=" \"#{arg}\""
+    else
+      args+=" #{arg}"
+  #puts "executing: #{target} #{args}"
+  child = exec "#{target} #{args}",  (error, stdout, stderr) ->
+    #puts "executed: #{target} #{args}"
+    console.log stdout
+    if stderr and stederr>""
+      console.log stderr
+
+exports.builder = (fn,cfn,target) ->
   c=""
   lines=[]
   source=[]
   imported={}
+
   emit = (s,debug) ->
     #puts "emit:: '#{s}'"
     #c+="#{s} // #{debug}\n"
@@ -41,7 +53,7 @@ builder = (fn,cfn,target) ->
 
   freader = (ffn) ->
     if imported[ffn]
-      puts "Error: Recursive/Double Import detected and Averted '#{ffn}' !"
+      console.log "Error: Recursive/Double Import detected and Averted '#{ffn}' !"
       return
     imported[ffn]=true
     frow=0
@@ -74,7 +86,6 @@ builder = (fn,cfn,target) ->
   lo={}
   atoms={}
   amax=1
-
 
   for line in lines
     indent=0
@@ -142,10 +153,10 @@ builder = (fn,cfn,target) ->
     if hit=match line,/^struct ([a-zA-Z_]+)\s*$/
       if ind==0
         instruct=hit[1]
-        puts "struct #{instruct}"
+        #puts "struct #{instruct}"
         emit "typedef struct {",line
       else
-        puts "Error: Struct must not be indented"
+        console.log "Error: Struct must not be indented"
     else if hit=match line,/^for\s+(.+)\s*$/
       incond[ind]=true
       rest=hit[1]
@@ -240,9 +251,12 @@ builder = (fn,cfn,target) ->
     row+=1
     oind=ind
 
-  #puts "-----------------"
-  #puts c
+  if not cfn
+    return c
   fs.writeFileSync cfn, c
+  if not target
+    return cfn
+
   cc="gcc -I /usr/local/include/koffeescript #{cfn} -o #{target}"
   #puts cc
   child = exec cc,  (error, stdout, stderr) ->
@@ -255,65 +269,16 @@ builder = (fn,cfn,target) ->
         fail=true
         fails.push e
     if not fail
-      runner()
+      exports.runner(target)
+      return true
     else
-      puts "********************* FAILED"
+      console.log "********************* FAILED"
       rn=1
       for r in c.split("\n")
-        puts "#{rn}:#{r}"
+        console.log "#{rn}:#{r}"
         rn+=1
-      puts cc
+      console.log cc
       for f in fails
-        puts f
+        console.log f
+      return false
 
-
-runner = () ->
-  args=""
-  for arg in process.argv[3..-1]
-    if match arg,/\s+/
-      args+=" \"#{arg}\""
-    else
-      args+=" #{arg}"
-  #puts "executing: #{target} #{args}"
-  child = exec "#{target} #{args}",  (error, stdout, stderr) ->
-    #puts "executed: #{target} #{args}"
-    puts stdout
-    if stderr and stederr>""
-      puts stderr
-
-fn=process.argv[2]
-
-
-
-
-afn=path.basename fn
-apath=path.dirname (path.resolve fn)
-
-cache_path="#{apath}/.koffee.cache"
-target="#{cache_path}/#{afn}.bin"
-cfn="#{cache_path}/#{afn}.c"
-
-puts cache_path,target,cfn
-
-if not fs.existsSync cache_path
-  fs.mkdirSync cache_path
-
-
-fd=fs.openSync fn,"r"
-stat=fs.fstatSync fd
-fs.closeSync(fd)
-
-cache=false
-if fs.existsSync target
-  fd=fs.openSync target,"r"
-  tstat=fs.fstatSync fd
-  fs.closeSync(fd)
-
-  if tstat.mtime> stat.mtime
-    cache=true
-
-
-if not cache
-  builder fn,cfn,target #this also runs after build
-else
-  runner()
