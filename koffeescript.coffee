@@ -50,7 +50,7 @@ exports.builder = (fn,cfn,target) ->
     str+="#{s}"
 
     if debug
-      c+=sprintf("%-50.50s// %-15.15s: %s\n",str,source[row].replace(/\.koffee/,""),lo[row])
+      c+=sprintf("%-60s // %-15.15s: %s\n",str,source[row].replace(/\.koffee/,""),lo[row])
     else
       c+="#{str}\n"
 
@@ -125,7 +125,7 @@ exports.builder = (fn,cfn,target) ->
     re= /(:[a-zA-Z_][a-zA-Z_0-9]*)/g
     max=0
     while (m=re.exec(line))!= null
-      console.log m
+      #console.log m
       a=m[0][1..-1]
       if !atoms[a]
         atoms[a]=amax
@@ -173,17 +173,17 @@ exports.builder = (fn,cfn,target) ->
             incond[ii]=false
 
     if suspend
-      console.log "suspended #{line}"
+      #console.log "suspended #{line}"
       emit(line,line)
       continue
     if hit=match line,/^#pragma\s+(no_)*koffee\s*$/
-      console.log "PRAGMAA!! #{hit[1]}"
+      #console.log "PRAGMAA!! #{hit[1]}"
       if not hit[1]
         suspend=false
         intofunc=false
       else
         suspend=true
-      console.log "PRAGMAA!! #{hit[1]} -> #{suspend}"
+      #console.log "PRAGMAA!! #{hit[1]} -> #{suspend}"
 
     if ind==0
       if instruct
