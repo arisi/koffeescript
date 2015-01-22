@@ -109,11 +109,15 @@ int main = (int argc,char** argv) ->
   // Notice: we have _ATOMS_
   printf "oujee a1=%d, a2=%d\\n",:atomi1,:toka
   int *p= jepulis "12"
+  int x
 
   if argc>3
     printf "ok"
   else
     printf "blah"
+
+  // ternary if onliner:
+  x= if argc in [0..5] then 55 else 77
 
   // Nice loops:
   for x in [0..7]
@@ -127,8 +131,8 @@ int main = (int argc,char** argv) ->
     else printf "blah"
 
   printf "argumentti hukassa\\n" if argc<2
-
-  printf "jee %d\\n",i while i<20
+  i=0
+  printf "jee %d\\n",i++ while i<20
 
   0 // Note: last statement is return value!
 

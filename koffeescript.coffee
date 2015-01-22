@@ -83,6 +83,22 @@ exports.builder = (fn,cfn,target) ->
 
   freader fn
 
+  fix_cond = (cond) ->
+    if hit=match cond,/^(.+)\s+in\s+\[\s*(.+)\s*\.\.\s*(.+)\s*\]\s*$/
+      v=hit[1]
+      v1=hit[2]
+      v2=hit[3]
+      cond="#{v}>=#{v1} && #{v}<=#{v2} "
+    else if hit=match cond,/^(.+)\s+in\s+\[\s*(.+)\s*\]\s*$/
+      v=hit[1]
+      values=hit[2].split ","
+      cond=""
+      for value in values
+        if cond!=""
+          cond+="|| "
+        cond+="#{v}==#{value} "
+    cond
+
   do_cmd = (line,extra_ind) ->
     ret=""
     ind+=extra_ind
@@ -91,7 +107,7 @@ exports.builder = (fn,cfn,target) ->
         #puts "***********LAST LINE****************, not return! #{incond[ind-1]} #{line}"
         ret="return "
     if line==""
-      console.log "crap '#{line}'"
+      #console.log "crap '#{line}'"
     else if hit=match line,/^([a-zA-Z_]+)\s+(.+)$/
       cmd=hit[1]
       rest=hit[2]
@@ -131,7 +147,7 @@ exports.builder = (fn,cfn,target) ->
         atoms[a]=amax
         amax+=1
       anum=atoms[a]
-      newline=line[0...m.index]+"(A_#{a})"+line[m.index+a.length+1..-1]
+      newline=line[0...m.index]+" A_#{a} "+line[m.index+a.length+1..-1]
       re= /(:[a-zA-Z_][a-zA-Z_0-9]*)/g
       line=newline
       max+=1
@@ -152,9 +168,9 @@ exports.builder = (fn,cfn,target) ->
   incond={}
   oind=0
   suspend=false
+  have_main=false
   #console.log l
 
-  emit("","");
   for row in [0...rows]
     line=l[row]
     ind=i[row]
@@ -165,7 +181,7 @@ exports.builder = (fn,cfn,target) ->
       for ii in [oind..ind] by -1
         if incond[ii]
           #puts "CHECK IND LEVEL #{ii}"
-          if ind==ii and match line,/else/
+          if ind==ii and match line,/else/ and not match line,/then/
             #puts "ELSE COMES"
           else
             #puts "COND ENDS"
@@ -221,6 +237,9 @@ exports.builder = (fn,cfn,target) ->
         e=hit[3]
         rest="#{v}=(#{s});#{v}<(#{e});#{v}+=1"
       emit "for (#{rest}) {",line
+    else if hit=match line,/^puts\s+(.+)\s*$/
+      do_cmd("printf #{hit[1]}",0)
+      emit "printf (\"\\n\"); ",""
     else if hit=match line,/^while\s+(.+)\s*$/
       incond[ind]="while"
       rest=hit[1]
@@ -228,14 +247,14 @@ exports.builder = (fn,cfn,target) ->
       emit "while (#{rest}) {",line
     else if hit=match line,/^(.+)\s+if\s+(.+)\s+then\s+(.+)\s+else\s+(.+)\s*/
       res=hit[1]
-      cond=hit[2]
+      cond=fix_cond hit[2]
       f=hit[3]
       s=hit[4]
       #puts "tripla #{cond},#{f},#{s}"
       emit "#{res} (#{cond}) ? (#{f}) : (#{s});",line
     else if hit=match line,/^(.+)\s+if\s+(.+)\s*/
       res=hit[1]
-      cond=hit[2]
+      cond=fix_cond hit[2]
       #puts "if lopussa #{cond},#{res}"
       emit "if (#{cond}) {",line
       do_cmd(res,1)
@@ -243,14 +262,14 @@ exports.builder = (fn,cfn,target) ->
       emit "}",
     else if hit=match line,/^(.+)\s+while\s+(.+)\s*/
       res=hit[1]
-      cond=hit[2]
+      cond=fix_cond hit[2]
       #puts "if lopussa #{cond},#{res}"
       emit "while (#{cond}) {",line
       do_cmd(res,1)
       emit "}",
     else if hit=match line,/^(.+)\s+until\s+(.+)\s*/
       res=hit[1]
-      cond=hit[2]
+      cond=fix_cond hit[2]
       #puts "if lopussa #{cond},#{res}"
       emit "while (! (#{cond})) {",line
       do_cmd(res,1)
@@ -262,7 +281,7 @@ exports.builder = (fn,cfn,target) ->
       emit "switch (#{rest}) {",line
     else if hit=match line,/^when\s+(.+)\s+then\s+(.+)\s*$/
       rest=hit[1]
-      emit "case (#{hit[1]}):",line
+      emit "case #{hit[1]}:",line
       do_cmd(hit[2],1)
       emit "  break;",""
     else if incond[ind-1]=="switch" and hit=match line,/^else\s(.+)\s*$/
@@ -271,11 +290,10 @@ exports.builder = (fn,cfn,target) ->
       emit "  break;",""
     else if hit=match line,/^if\s+(.+)\s*$/
       incond[ind]="if"
-      rest=hit[1]
-      #puts "incodition"
-      emit "if (#{rest}) {",line
+      cond=fix_cond hit[1]
+      emit "if (#{cond}) {",line
     else if incond[ind]=="if" and hit=match line,/^else\s+if\s*(.+)\s*$/
-      rest=hit[1]
+      rest=fix_cond hit[1]
       #puts "incodition continues"
       emit "} else if (#{rest}) {",line
     else if incond[ind]=="if" and hit=match line,/^else\s*$/
@@ -283,10 +301,10 @@ exports.builder = (fn,cfn,target) ->
       #puts "incodition continues "
       emit "} else {",line
 
-    else if hit=match line,/^([a-zA-Z_]+\s+)*([a-zA-Z_]+)\s+((?:[\*]{0,1}\s*)[a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=\s*(.*)){0,1}\s*$/
+    else if hit=match line,/^([a-zA-Z_]+\s+)*([a-zA-Z_]+\s+){0,1}((?:[\*]{0,1}\s*)[a-zA-Z_][a-zA-Z_0-9]*)(?:(\[.*\])){0,1}\s*(?:=\s*(.*)){0,1}\s*$/
       #variable declaration OR function start
       typep=hit[1]||""
-      type=hit[2]
+      type=hit[2]||""
       sym=hit[3]
       dim=hit[4]||""
       init=hit[5]
@@ -297,6 +315,9 @@ exports.builder = (fn,cfn,target) ->
         intofunc=true
       if intofunc
         emit "#{typep}#{type} #{sym}(#{args}) {",line
+        if match sym,"main"
+          have_main=true
+          #console.log "YEE"
         infunc=sym
       else if init
         emit "#{typep}#{type} #{sym}#{dim}=",line
@@ -308,8 +329,13 @@ exports.builder = (fn,cfn,target) ->
       do_cmd(line,0)
     row+=1
     oind=ind
+  if not have_main
+    premit("int main() {","")
+    emit("return(0); }","")
 
-  premit("}","");
+  premit("","");
+
+  premit("};","");
   premit("  A__last","");
   for atom,val of atoms
     premit("  A_#{atom},","");
@@ -323,28 +349,32 @@ exports.builder = (fn,cfn,target) ->
   if not target
     return cfn
 
-  cc="gcc -I /usr/local/include/koffeescript #{cfn} -o #{target}"
+  cc="LANG=en_UK.UTF-8; gcc -I /usr/local/include/koffeescript #{cfn} -o #{target}"
   #puts cc
   child = exec cc,  (error, stdout, stderr) ->
-    #puts stdout
+    #console.log stdout
     errs=stderr.split("\n")
     fail=false
     fails=[]
     for e in errs
-      if match e,/error:/
+      if match(e,/error:/) or match(e,/undefined reference/)
         fail=true
         fails.push e
+      else
+        #console.log ">#{e}"
     if not fail
       exports.runner(target)
       return true
     else
-      console.log "********************* FAILED"
+      console.log "\nC-Compilation Failed:\n----------------------------------------------------"
       rn=1
       for r in c.split("\n")
         console.log "#{rn}:#{r}"
         rn+=1
-      console.log cc
+      #console.log cc
+      console.log "----------------------------------------------------\nErrors:"
       for f in fails
         console.log f
+      console.log ""
       return false
 
