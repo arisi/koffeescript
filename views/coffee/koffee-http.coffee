@@ -106,7 +106,8 @@ int *jepulis = (int arvo) ->
   &arvo
 
 int main = (int argc,char** argv) ->
-  printf "oujee\\n"
+  // Notice: we have _ATOMS_
+  printf "oujee a1=%d, a2=%d\\n",:atomi1,:toka
   int *p= jepulis "12"
 
   if argc>3
@@ -118,7 +119,7 @@ int main = (int argc,char** argv) ->
   for x in [0..7]
     printf "luuppi %d\\n",x
   for x in [0..7] by 2
-    printf "luuppi %d\\n",x
+    printf "luuppi %d,%d\\n",x.:atomi1
 
   switch argc
     when 1 then printf "ok"

@@ -34,6 +34,9 @@ exports.builder = (fn,cfn,target) ->
   source=[]
   imported={}
 
+  premit = (s,debug) ->
+    c=s+"\n"+c
+
   emit = (s,debug) ->
     #puts "emit:: '#{s}'"
     #c+="#{s} // #{debug}\n"
@@ -120,18 +123,25 @@ exports.builder = (fn,cfn,target) ->
     line=replace line, /\snot\s/," ! "
 
     re= /(:[a-zA-Z_][a-zA-Z_0-9]*)/g
+    max=0
     while (m=re.exec(line))!= null
-      a=m[0]
+      console.log m
+      a=m[0][1..-1]
       if !atoms[a]
         atoms[a]=amax
         amax+=1
       anum=atoms[a]
-      newline=line[0...m.index]+"(#{anum})"+line[m.index+a.length..-1]
+      newline=line[0...m.index]+"(A_#{a})"+line[m.index+a.length+1..-1]
+      re= /(:[a-zA-Z_][a-zA-Z_0-9]*)/g
       line=newline
+      max+=1
+      if max>10
+        break
     line[0..1]="xx"
     l[row]=line[indent..-1]
 
     row+=1
+
   l[row]=""
   i[row]=0
   row+=1
@@ -143,7 +153,6 @@ exports.builder = (fn,cfn,target) ->
   oind=0
   suspend=false
   #console.log l
-  emit("#include \"koffeescript.h\"","");
 
   emit("","");
   for row in [0...rows]
@@ -187,7 +196,7 @@ exports.builder = (fn,cfn,target) ->
         emit "}",""
         emit("","");
         infunc=false
-    if hit=match line,/^struct ([a-zA-Z_]+)\s*$/
+    if hit=match line,/^struct\s+([a-zA-Z_]+)\s*$/
       if ind==0
         instruct=hit[1]
         #puts "struct #{instruct}"
@@ -299,6 +308,14 @@ exports.builder = (fn,cfn,target) ->
       do_cmd(line,0)
     row+=1
     oind=ind
+
+  premit("}","");
+  premit("  A__last","");
+  for atom,val of atoms
+    premit("  A_#{atom},","");
+  premit("enum kof_atoms {","");
+  premit("","");
+  premit("#include \"koffeescript.h\"","");
 
   if not cfn
     return c
