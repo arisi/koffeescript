@@ -1,0 +1,39 @@
+#include "koffeescript.h"
+
+enum kof_atoms {
+  A__last
+};
+
+typedef struct {                                             // x.kof:4        : struct rec
+  int  aa;                                                   // x.kof:5        :   int aa
+} rec;
+
+rec  recs[100];                                              // x.kof:7        : rec recs[100]
+int  main(int argc,char **argv) {                            // x.kof:9        : int main = (int argc,char **argv) ->
+  int  i;                                                    // x.kof:10       :   int i
+  i= (argc>5) ? (6) : (7);                                   // x.kof:11       :   i= if argc>5 then 6 else 7
+  while (! (i>10)) {                                         // x.kof:12       :   printf("luuppi %d\n",i+=1) until i>10
+    printf("luuppi %d\n",i+=1);                              // x.kof:12       :   printf("luuppi %d\n",i+=1) until i>10
+  }
+  recs[0].aa=123;                                            // x.kof:13       :   recs[0].aa=123
+  printf  ( "\nKoffeeScript: -- here we go!\n" );            // x.kof:14       :   printf "\nKoffeeScript: -- here we go!\n"
+  if (true) {                                                // x.kof:15       :   printf("tadaa\n") if true
+    printf("tadaa\n");                                       // x.kof:15       :   printf("tadaa\n") if true
+  }
+  for (i=0;i<argc;i++) {                                     // x.kof:16       :   for i=0;i<argc;i++
+    printf  ( "arg:%d='%s'\n",i,argv[i] );                   // x.kof:17       :     printf "arg:%d='%s'\n",i,argv[i]
+  }
+  for (i=(0);i<(5);i+=(2)) {                                 // x.kof:18       :   for i in [0..5] by 2
+    printf  ( "jee %d\n",i );                                // x.kof:19       :     printf "jee %d\n",i
+  }
+  if (argc<2 || ! true) {                                    // x.kof:20       :   if argc<2 or not true
+    printf  ( "EI ARGUMENTTIA!!!!!!!!!\n" );                 // x.kof:21       :     printf "EI ARGUMENTTIA!!!!!!!!!\n"
+    exit(-1);                                                // x.kof:22       :     exit(-1)
+}
+}
+
+#pragma no_koffee;                                           // x.kof:24       : #pragma no_koffee
+int raakaa=12;                                               // x.kof:25       : int raakaa=12;
+char **s;                                                    // x.kof:26       : char **s;
+#pragma koffee                                               // x.kof:27       : #pragma koffee
+

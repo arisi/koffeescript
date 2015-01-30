@@ -181,8 +181,8 @@ exports.builder = (fn,cfn,target) ->
       for ii in [oind..ind] by -1
         if incond[ii]
           #puts "CHECK IND LEVEL #{ii}"
-          if ind==ii and match line,/else/ and not match line,/then/
-            #puts "ELSE COMES"
+          if ind==ii and ( match(line,/else/) or match(line,/elif/) )  and not match line,/then/
+            #console.log "ELSE COMES"
           else
             #puts "COND ENDS"
             emit "}",""
@@ -252,7 +252,7 @@ exports.builder = (fn,cfn,target) ->
       s=hit[4]
       #puts "tripla #{cond},#{f},#{s}"
       emit "#{res} (#{cond}) ? (#{f}) : (#{s});",line
-    else if hit=match line,/^(.+)\s+if\s+(.+)\s*/
+    else if not incond[ind] and hit=match line,/^(.+)\s+if\s+(.+)\s*/
       res=hit[1]
       cond=fix_cond hit[2]
       #puts "if lopussa #{cond},#{res}"
@@ -293,6 +293,10 @@ exports.builder = (fn,cfn,target) ->
       cond=fix_cond hit[1]
       emit "if (#{cond}) {",line
     else if incond[ind]=="if" and hit=match line,/^else\s+if\s*(.+)\s*$/
+      rest=fix_cond hit[1]
+      #console.log "!!incodition continues"
+      emit "} else if (#{rest}) {",line
+    else if incond[ind]=="if" and hit=match line,/^elif\s+(.+)\s*$/
       rest=fix_cond hit[1]
       #puts "incodition continues"
       emit "} else if (#{rest}) {",line

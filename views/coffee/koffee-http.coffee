@@ -92,7 +92,7 @@ jQuery ($, undefined_) ->
   editor.getSession().setTabSize(2)
   editor.getSession().setUseSoftTabs(true)
   editor.clearSelection()
-  editor.setOptions({fontSize: "9pt"})
+  editor.setOptions({fontSize: "8pt"})
   editor.setTheme("ace/theme/vibrant_ink");
   editor.setValue("""
 //# Welcome to play with KoffeeScript:
@@ -113,10 +113,14 @@ int main = (int argc,char** argv) ->
 
   if argc>3
     printf "ok"
+  elif argc>3
+    printf "ok"
+  else if argc>6  // both ways ok
+    printf "ok"
   else
     printf "blah"
 
-  // ternary if onliner:
+  // ternary if operator:
   x= if argc in [0..5] then 55 else 77
 
   // Nice loops:
@@ -156,7 +160,7 @@ char **s;
   ceditor.getSession().setUseSoftTabs(true)
   ceditor.clearSelection()
   ceditor.gotoLine(0)
-  ceditor.setOptions({fontSize: "9pt"})
+  ceditor.setOptions({fontSize: "8pt"})
   ceditor.setTheme("ace/theme/vibrant_ink");
   ceditor.getSession().setMode("ace/mode/c_cpp");
 
